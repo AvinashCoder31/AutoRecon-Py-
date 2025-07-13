@@ -115,10 +115,10 @@ class AutoRecon:
 
         # Print the box
         print(f"{Fore.CYAN}╔{'═' * (box_width - 2)}╗{Style.RESET_ALL}")
-        print(f"{Fore.CYAN}║  {Fore.GREEN}{line1}{Style.CYAN}  ║")
-        print(f"{Fore.CYAN}║  {Fore.GREEN}{line2}{Style.CYAN}  ║")
-        print(f"{Fore.CYAN}║  {Fore.GREEN}{line3}{Style.CYAN}  ║")
-        print(f"{Fore.CYAN}║  {Fore.GREEN}{line4}{Style.CYAN}  ║")
+        print(f"{Fore.CYAN}║  {Fore.GREEN}{line1}{Fore.CYAN}  ║")
+        print(f"{Fore.CYAN}║  {Fore.GREEN}{line2}{Fore.CYAN}  ║")
+        print(f"{Fore.CYAN}║  {Fore.GREEN}{line3}{Fore.CYAN}  ║")
+        print(f"{Fore.CYAN}║  {Fore.GREEN}{line4}{Fore.CYAN}  ║")
         print(f"{Fore.CYAN}╚{'═' * (box_width - 2)}╝{Style.RESET_ALL}")
     
     def run_subdomain_enumeration(self):
