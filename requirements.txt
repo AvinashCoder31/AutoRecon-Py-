@@ -6,6 +6,5 @@ urllib3>=1.26.5
 lxml>=4.6.3
 dnspython>=2.1.0
 python-nmap>=0.7.1
-sublist3r>=1.0.5
+sublist3r
 argparse>=1.4.0
-concurrent-futures>=3.1.1
