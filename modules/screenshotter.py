@@ -10,8 +10,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, WebDriverException
 from colorama import Fore, Style
-from urllib.parse import urlparse
-import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 class WebScreenshotter:

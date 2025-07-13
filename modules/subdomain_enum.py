@@ -8,7 +8,6 @@ import os
 import requests
 import subprocess
 import threading
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from colorama import Fore, Style
 

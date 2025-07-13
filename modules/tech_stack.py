@@ -5,8 +5,7 @@ import re
 import subprocess
 import json
 from colorama import Fore, Style
-from urllib.parse import urlparse
-import time
+
 
 class TechStackDetector:
     def __init__(self):
