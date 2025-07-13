@@ -65,8 +65,9 @@ class WebScreenshotter:
         """
         try:
             response = requests.get(url, timeout=5, verify=False)
-            return response.status_code == 200
-        except:
+            # We only care about success, not the reason for failure
+            return response.status_code < 400
+        except requests.exceptions.RequestException:
             return False
     
     def take_screenshot(self, target, protocols=['https', 'http']):
@@ -189,12 +190,9 @@ class WebScreenshotter:
         Sanitize filename to be safe for filesystem
         """
         # Replace unsafe characters
-        unsafe_chars = '<>:"/\\|?*'
-        for char in unsafe_chars:
-            filename = filename.replace(char, '_')
-        
-        # Remove dots except for the last one (for extension)
-        filename = filename.replace('.', '_')
+        # Replace protocol and invalid filesystem characters
+        filename = filename.replace("http://", "").replace("https://", "")
+        filename = "".join(c if c.isalnum() or c in ".-_" else "_" for c in filename)
         
         # Limit length
         if len(filename) > 100:

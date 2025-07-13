@@ -13,9 +13,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from colorama import Fore, Style
 
 class PortScanner:
-    def __init__(self, output_dir, threads=10):
+    def __init__(self, output_dir, threads=10, timeout=10):
         self.output_dir = output_dir
         self.threads = threads
+        self.timeout = timeout
         self.lock = threading.Lock()
         
         # Common ports to scan
@@ -60,11 +61,11 @@ class PortScanner:
             8000: "HTTP-Alt", 8080: "HTTP-Proxy", 8443: "HTTPS-Alt", 8888: "HTTP-Alt"
         }
     
-    def scan_port(self, target, port, timeout=3):
+    def scan_port(self, target, port):
         """Scan a single port"""
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(timeout)
+            sock.settimeout(self.timeout)
             result = sock.connect_ex((target, port))
             sock.close()
             
@@ -90,7 +91,7 @@ class PortScanner:
         
         with ThreadPoolExecutor(max_workers=self.threads) as executor:
             future_to_port = {
-                executor.submit(self.scan_port, target, port): port 
+                executor.submit(self.scan_port, target, port): port
                 for port in ports
             }
             
@@ -148,17 +149,19 @@ class PortScanner:
                 
                 return open_ports
             else:
-                print(f"{Fore.YELLOW}[WARNING] Nmap scan failed for {target}{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[WARNING] Nmap scan failed for {target} with exit code {result.returncode}{Style.RESET_ALL}")
+                if result.stderr:
+                    print(f"{Fore.YELLOW}{result.stderr.strip()}{Style.RESET_ALL}")
                 return []
                 
+        except FileNotFoundError:
+            print(f"{Fore.YELLOW}[INFO] Nmap not found. Skipping Nmap scan.{Style.RESET_ALL}")
+            return []
         except subprocess.TimeoutExpired:
             print(f"{Fore.YELLOW}[WARNING] Nmap scan timed out for {target}{Style.RESET_ALL}")
             return []
-        except FileNotFoundError:
-            print(f"{Fore.YELLOW}[WARNING] Nmap not available, falling back to socket scan{Style.RESET_ALL}")
-            return []
         except Exception as e:
-            print(f"{Fore.RED}[ERROR] Nmap scan error: {str(e)}{Style.RESET_ALL}")
+            print(f"{Fore.RED}[ERROR] An unexpected error occurred with Nmap: {e}{Style.RESET_ALL}")
             return []
     
     def masscan_scan(self, target):
@@ -167,7 +170,7 @@ class PortScanner:
         
         try:
             result = subprocess.run(
-                ["masscan", "-p1-65535", target, "--rate=1000", "--wait=0"],
+                ["masscan", "-p1-65535", target, "--rate=100", "--wait=0"],
                 capture_output=True,
                 text=True,
                 timeout=120
@@ -182,17 +185,19 @@ class PortScanner:
                 
                 return open_ports
             else:
-                print(f"{Fore.YELLOW}[WARNING] Masscan failed for {target}{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[WARNING] Masscan failed for {target} with exit code {result.returncode}{Style.RESET_ALL}")
+                if result.stderr:
+                    print(f"{Fore.YELLOW}{result.stderr.strip()}{Style.RESET_ALL}")
                 return []
                 
-        except subprocess.TimeoutExpired:
-            print(f"{Fore.YELLOW}[WARNING] Masscan timed out for {target}{Style.RESET_ALL}")
-            return []
         except FileNotFoundError:
-            print(f"{Fore.YELLOW}[WARNING] Masscan not available{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}[INFO] Masscan not found. Skipping.{Style.RESET_ALL}")
+            return []
+        except subprocess.TimeoutExpired:
+            print(f"{Fore.YELLOW}[WARNING] Masscan scan timed out for {target}{Style.RESET_ALL}")
             return []
         except Exception as e:
-            print(f"{Fore.RED}[ERROR] Masscan error: {str(e)}{Style.RESET_ALL}")
+            print(f"{Fore.RED}[ERROR] An unexpected error occurred with Masscan: {e}{Style.RESET_ALL}")
             return []
     
     def unicornscan_scan(self, target):
@@ -216,15 +221,19 @@ class PortScanner:
                 
                 return open_ports
             else:
+                print(f"{Fore.YELLOW}[WARNING] Unicornscan failed for {target} with exit code {result.returncode}{Style.RESET_ALL}")
+                if result.stderr:
+                    print(f"{Fore.YELLOW}{result.stderr.strip()}{Style.RESET_ALL}")
                 return []
                 
+        except FileNotFoundError:
+            print(f"{Fore.YELLOW}[INFO] Unicornscan not found. Skipping.{Style.RESET_ALL}")
+            return []
         except subprocess.TimeoutExpired:
             print(f"{Fore.YELLOW}[WARNING] Unicornscan timed out for {target}{Style.RESET_ALL}")
             return []
-        except FileNotFoundError:
-            print(f"{Fore.YELLOW}[WARNING] Unicornscan not available{Style.RESET_ALL}")
-            return []
         except Exception as e:
+            print(f"{Fore.RED}[ERROR] An unexpected error occurred with Unicornscan: {e}{Style.RESET_ALL}")
             return []
     
     def banner_grab(self, target, port):
@@ -255,8 +264,10 @@ class PortScanner:
             if banner:
                 return banner[:200]  # Limit banner length
             
-        except Exception as e:
-            pass
+        except socket.timeout:
+            return "Banner grab timed out"
+        except Exception:
+            return None
         
         return None
     
@@ -298,7 +309,7 @@ class PortScanner:
         for result in unique_results:
             try:
                 # Extract port number from result
-                port_str = result.split('/')[0].split()[-1]
+                port_str = result.split('/')[0]
                 if port_str.isdigit():
                     port = int(port_str)
                     banner = self.banner_grab(target, port)
@@ -310,7 +321,8 @@ class PortScanner:
                         enhanced_results.append(result)
                 else:
                     enhanced_results.append(result)
-            except:
+            except (ValueError, IndexError):
+                # Handle cases where port parsing might fail
                 enhanced_results.append(result)
         
         # Save results

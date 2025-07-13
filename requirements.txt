@@ -1,10 +1,4 @@
 requests
-beautifulsoup4
 selenium
 colorama
-urllib3
-lxml
-dnspython
-python-nmap
 sublist3r
-argparse

@@ -40,37 +40,29 @@ class SubdomainEnumerator:
         ]
     
     def check_subdomain(self, subdomain):
-        """Check if a subdomain exists"""
+        """Check if a subdomain exists by trying HTTP, HTTPS, and DNS resolution."""
         full_domain = f"{subdomain}.{self.target}"
-        try:
-            # Try HTTP first
-            response = requests.get(f"http://{full_domain}", timeout=5, allow_redirects=True)
-            if response.status_code < 400:
-                with self.lock:
-                    self.subdomains.add(full_domain)
-                return full_domain
-        except:
-            pass
+        protocols = ['https', 'http']
         
-        try:
-            # Try HTTPS
-            response = requests.get(f"https://{full_domain}", timeout=5, allow_redirects=True, verify=False)
-            if response.status_code < 400:
-                with self.lock:
-                    self.subdomains.add(full_domain)
-                return full_domain
-        except:
-            pass
+        for protocol in protocols:
+            try:
+                response = requests.get(f"{protocol}://{full_domain}", timeout=5, allow_redirects=True, verify=False)
+                if response.status_code < 400:
+                    with self.lock:
+                        self.subdomains.add(full_domain)
+                    return full_domain
+            except requests.exceptions.RequestException:
+                continue # Try next protocol or fallback to DNS
         
-        # Try DNS resolution as fallback
+        # Fallback to DNS resolution if web requests fail
         try:
             import socket
             socket.gethostbyname(full_domain)
             with self.lock:
                 self.subdomains.add(full_domain)
             return full_domain
-        except:
-            pass
+        except socket.gaierror:
+            return None # Subdomain does not resolve
         
         return None
     
@@ -121,8 +113,10 @@ class SubdomainEnumerator:
                                     self.subdomains.add(name)
                                 print(f"{Fore.GREEN}[+] CT Log SAN: {name}{Style.RESET_ALL}")
         
-        except Exception as e:
-            print(f"{Fore.YELLOW}[WARNING] Certificate Transparency check failed: {str(e)}{Style.RESET_ALL}")
+        except requests.exceptions.RequestException as e:
+            print(f"{Fore.YELLOW}[WARNING] Certificate Transparency check failed: {e}{Style.RESET_ALL}")
+        except json.JSONDecodeError:
+            print(f"{Fore.YELLOW}[WARNING] Failed to decode JSON from crt.sh.{Style.RESET_ALL}")
     
     def use_subfinder(self):
         """Use subfinder if available"""
@@ -143,39 +137,35 @@ class SubdomainEnumerator:
                             self.subdomains.add(line.strip())
                         print(f"{Fore.GREEN}[+] Subfinder: {line.strip()}{Style.RESET_ALL}")
             else:
-                print(f"{Fore.YELLOW}[WARNING] Subfinder not available or failed{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[WARNING] Subfinder failed with exit code {result.returncode}:{Style.RESET_ALL}")
+                if result.stderr:
+                    print(f"{Fore.YELLOW}{result.stderr.strip()}{Style.RESET_ALL}")
         
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            print(f"{Fore.YELLOW}[WARNING] Subfinder not available{Style.RESET_ALL}")
+        except FileNotFoundError:
+            print(f"{Fore.YELLOW}[INFO] Subfinder not found. Skipping.{Style.RESET_ALL}")
+        except subprocess.TimeoutExpired:
+            print(f"{Fore.YELLOW}[WARNING] Subfinder timed out.{Style.RESET_ALL}")
     
     def use_sublist3r(self):
-        """Use Sublist3r if available"""
+        """Use Sublist3r if available by importing it as a library."""
         print(f"{Fore.BLUE}[INFO] Attempting to use Sublist3r...{Style.RESET_ALL}")
-        
         try:
-            result = subprocess.run(
-                ['python3', '-c', f"""
-import sublist3r
-subdomains = sublist3r.main('{self.target}', 40, None, ports=None, silent=True, verbose=False, enable_bruteforce=False, engines=None)
-for subdomain in subdomains:
-    print(subdomain)
-"""],
-                capture_output=True,
-                text=True,
-                timeout=120
-            )
+            import sublist3r
+            # The sublist3r.main function is designed for command-line output,
+            # so we capture its results by redirecting stdout.
+            # This is still better than a subprocess call.
+            found_subdomains = sublist3r.main(self.target, 40, savefile=None, ports=None, silent=True, verbose=False, enable_bruteforce=False, engines=None)
             
-            if result.returncode == 0:
-                for line in result.stdout.strip().split('\n'):
-                    if line.strip():
-                        with self.lock:
-                            self.subdomains.add(line.strip())
-                        print(f"{Fore.GREEN}[+] Sublist3r: {line.strip()}{Style.RESET_ALL}")
-            else:
-                print(f"{Fore.YELLOW}[WARNING] Sublist3r not available or failed{Style.RESET_ALL}")
-        
-        except (subprocess.TimeoutExpired, FileNotFoundError, ImportError):
-            print(f"{Fore.YELLOW}[WARNING] Sublist3r not available{Style.RESET_ALL}")
+            if found_subdomains:
+                for subdomain in found_subdomains:
+                    with self.lock:
+                        self.subdomains.add(subdomain)
+                    print(f"{Fore.GREEN}[+] Sublist3r: {subdomain}{Style.RESET_ALL}")
+
+        except ImportError:
+            print(f"{Fore.YELLOW}[INFO] Sublist3r not installed. Skipping.{Style.RESET_ALL}")
+        except Exception as e:
+            print(f"{Fore.RED}[ERROR] An error occurred with Sublist3r: {e}{Style.RESET_ALL}")
     
     def use_amass(self):
         """Use Amass if available"""
@@ -196,10 +186,14 @@ for subdomain in subdomains:
                             self.subdomains.add(line.strip())
                         print(f"{Fore.GREEN}[+] Amass: {line.strip()}{Style.RESET_ALL}")
             else:
-                print(f"{Fore.YELLOW}[WARNING] Amass not available or failed{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}[WARNING] Amass failed with exit code {result.returncode}:{Style.RESET_ALL}")
+                if result.stderr:
+                    print(f"{Fore.YELLOW}{result.stderr.strip()}{Style.RESET_ALL}")
         
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            print(f"{Fore.YELLOW}[WARNING] Amass not available{Style.RESET_ALL}")
+        except FileNotFoundError:
+            print(f"{Fore.YELLOW}[INFO] Amass not found. Skipping.{Style.RESET_ALL}")
+        except subprocess.TimeoutExpired:
+            print(f"{Fore.YELLOW}[WARNING] Amass timed out.{Style.RESET_ALL}")
     
     def load_wordlist(self):
         """Load wordlist from config if available"""

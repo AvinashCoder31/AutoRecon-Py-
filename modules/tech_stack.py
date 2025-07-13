@@ -62,7 +62,7 @@ class TechStackDetector:
                     tech_info = self._analyze_content(response.text, tech_info)
                     tech_info = self._analyze_cookies(response.cookies, tech_info)
                     break
-            except:
+            except requests.exceptions.RequestException:
                 continue
         
         # Try whatweb if available
@@ -233,8 +233,11 @@ class TechStackDetector:
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
                 if result.returncode == 0:
                     return result.stdout
-        except:
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            # This is expected if whatweb is not installed or times out
             pass
+        except Exception as e:
+            print(f"{Fore.RED}[!] An unexpected error occurred with whatweb: {e}{Style.RESET_ALL}")
         
         return None
     

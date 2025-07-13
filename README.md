@@ -39,7 +39,7 @@ pip3 install -r requirements.txt
 #### On Ubuntu/Debian:
 ```bash
 sudo apt update
-sudo apt install nmap whatweb chromium-browser
+sudo apt install nmap whatweb chromium-browser chromium-chromedriver
 ```
 
 #### On CentOS/RHEL:
@@ -53,11 +53,6 @@ brew install nmap
 ```
 
 ### Step 4: Install ChromeDriver
-
-#### Ubuntu/Debian:
-```bash
-sudo apt install chromium-chromedriver
-```
 
 #### Manual Installation:
 1. Download ChromeDriver from https://chromedriver.chromium.org/
@@ -92,7 +87,7 @@ python3 main.py --target example.com --no-screenshots --no-tech
 | Option | Description | Default |
 |--------|-------------|---------|
 | `-t, --target` | Target domain (required) | - |
-| `-o, --output` | Output directory | `output` |
+| `-o, --output` | Main output directory | `output` |
 | `--threads` | Number of threads | `10` |
 | `--timeout` | Connection timeout (seconds) | `10` |
 | `--no-subdomains` | Skip subdomain enumeration | `False` |
@@ -101,24 +96,21 @@ python3 main.py --target example.com --no-screenshots --no-tech
 | `--no-screenshots` | Skip screenshot capture | `False` |
 | `--quick` | Quick scan mode | `False` |
 
-## 📁 Project Structure
+## 📁 Output Structure
+
+All results are saved in a timestamped directory for each target to keep scans organized.
 
 ```
-AutoRecon-Py/
-├── README.md
-├── requirements.txt
-├── config/
-│   └── wordlists.txt
-├── output/
-│   └── (recon results saved here)
-├── screenshots/
-│   └── (site screenshots here)
-├── modules/
-│   ├── subdomain_enum.py
-│   ├── port_scanner.py
-│   ├── tech_stack.py
-│   └── screenshotter.py
-└── main.py
+output/
+└── <target>_<timestamp>/
+    ├── summary_report_<timestamp>.txt
+    ├── full_results_<timestamp>.json
+    ├── subdomains.txt
+    ├── ports_<target>.txt
+    ├── tech_stack_<timestamp>.json
+    └── screenshots/
+        ├── <subdomain>_http.png
+        └── <subdomain>_https.png
 ```
 
 ## 🔧 Module Details
@@ -151,50 +143,67 @@ AutoRecon-Py/
 ## 📊 Sample Output
 
 ```
-╔══════════════════════════════════════════════════════════════╗
-║                      AutoRecon-Py v1.0                      ║
-║              Automated Reconnaissance Tool                   ║
-║                                                              ║
-║  Target: example.com                                         ║
-║  Threads: 10                                                 ║
-║  Timeout: 10s                                                ║
-╚══════════════════════════════════════════════════════════════╝
+[+] Output directory: output/example.com_20231028_120000
+
+
+ █████╗ ██╗   ██╗████████╗ ██████╗ ██████╗ ███████╗ ██████╗ ██████╗ ███╗   ██╗
+██╔══██╗██║   ██║╚══██╔══╝██╔═══██╗██╔══██╗██╔════╝██╔════╝██╔═══██╗████╗  ██║
+███████║██║   ██║   ██║   ██║   ██║██████╔╝█████╗  ██║     ██║   ██║██╔██╗ ██║
+██╔══██║██║   ██║   ██║   ██║   ██║██╔══██╗██╔══╝  ██║     ██║   ██║██║╚██╗██║
+██║  ██║╚██████╔╝   ██║   ╚██████╔╝██║  ██║███████╗╚██████╗╚██████╔╝██║ ╚████║
+╚═╝  ╚═╝ ╚═════╝    ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝
+
+                      AutoRecon-Py v1.1 - Automated Reconnaissance Tool
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  Target: example.com                                                         ║
+║  Threads: 10                                                                 ║
+║  Timeout: 10s                                                                ║
+║  Output: output/example.com_20231028_120000                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 
 ============================================================
 [1/4] SUBDOMAIN ENUMERATION
 ============================================================
+[+] Subdomain enumeration completed
 [+] Found 25 subdomains
-[+] Active subdomains: 18
+[+] Results saved to: output/example.com_20231028_120000/subdomains.txt
 
 ============================================================
 [2/4] PORT SCANNING
 ============================================================
-[+] Scanning 18 hosts
-[+] Open ports found: 45
+[+] Port scanning completed for 11 hosts
 
 ============================================================
 [3/4] TECHNOLOGY STACK DETECTION
 ============================================================
-[+] Analyzing technology stacks
-[+] Technologies detected: Nginx, PHP, WordPress, MySQL
+[+] Technology stack detection completed
+[+] Analyzed 6 targets
+[+] Results saved to: output/example.com_20231028_120000/tech_stack_20231028_120000.json
 
 ============================================================
 [4/4] SCREENSHOT CAPTURE
 ============================================================
-[+] Capturing screenshots
-[+] Successful: 16, Failed: 2
+[+] Screenshot capture completed
+[+] Successful: 5, Failed: 1
+[+] Screenshots saved to: output/example.com_20231028_120000/screenshots
+
+============================================================
+GENERATING SUMMARY REPORT
+============================================================
+[+] Summary report generated: output/example.com_20231028_120000/summary_report_20231028_120000.txt
+[+] Full results saved: output/example.com_20231028_120000/full_results_20231028_120000.json
 ```
 
 ## 📋 Generated Reports
 
-AutoRecon-Py generates several types of reports:
+AutoRecon-Py generates a structured set of reports inside a dedicated directory for each scan (`output/<target>_<timestamp>/`):
 
-1. **Subdomain List** (`target_subdomains_timestamp.txt`)
-2. **Port Scan Results** (`target_ports_timestamp.json`)
-3. **Technology Stack** (`target_tech_stack_timestamp.json`)
-4. **Summary Report** (`target_summary_timestamp.txt`)
-5. **Full Results** (`target_full_results_timestamp.json`)
-6. **Screenshots** (stored in `screenshots/` directory)
+1. **Summary Report** (`summary_report_<timestamp>.txt`): A human-readable summary of all findings.
+2. **Full JSON Report** (`full_results_<timestamp>.json`): A machine-readable JSON file containing all collected data.
+3. **Subdomain List** (`subdomains.txt`): A simple list of all discovered subdomains.
+4. **Port Scan Results** (`ports_<hostname>.txt`): Detailed port scan and banner grabbing results for each host.
+5. **Technology Stack** (`tech_stack_<timestamp>.json`): Technology information in JSON format.
+6. **Screenshots**: PNG files of websites, stored in the `screenshots/` subdirectory.
 
 ## 🚨 Legal Disclaimer
 
