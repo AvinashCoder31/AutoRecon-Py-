@@ -6,6 +6,7 @@ Performs subdomain discovery using multiple techniques
 
 import os
 import json
+import sys
 import requests
 import subprocess
 import threading
@@ -278,8 +279,20 @@ class SubdomainEnumerator:
         subfinder_thread.start()
         tool_threads.append(subfinder_thread)
         
-        # Sublist3r
-        sublist3r_thread = threading.Thread(target=self.use_sublist3r)
+        # Sublist3r – silent stderr, keep stdout
+        sublist3r_thread = threading.Thread(
+            target=lambda: subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    "import sublist3r; [print(s) for s in sublist3r.main('{}',40,None,None,True,False,False,None)]"
+                    .format(self.target)
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                text=True
+            ).stdout.splitlines()
+        )
         sublist3r_thread.start()
         tool_threads.append(sublist3r_thread)
         
