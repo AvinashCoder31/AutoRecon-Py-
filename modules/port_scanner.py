@@ -274,6 +274,14 @@ class PortScanner:
     def scan_target(self, target):
         """Perform comprehensive port scanning on a target"""
         print(f"{Fore.CYAN}Starting port scan for {target}{Style.RESET_ALL}")
+
+        # --- DNS sanity check ---
+        try:
+            import socket
+            socket.gethostbyname(target)
+        except socket.gaierror:
+            print(f"{Fore.YELLOW}[SKIP] {target} — no DNS resolution{Style.RESET_ALL}")
+            return []
         
         all_results = []
         

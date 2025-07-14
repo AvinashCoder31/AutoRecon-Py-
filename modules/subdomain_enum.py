@@ -257,15 +257,17 @@ class SubdomainEnumerator:
         for thread in threads:
             thread.join()
         
-        # Remove main domain from results if it exists
+        # Remove main domain & wildcards / non-valid hostnames
         self.subdomains.discard(self.target)
-        
+        valid_subs = [s for s in self.subdomains
+                      if '*' not in s and s.count('.') >= 1]
+        self.subdomains = sorted(set(valid_subs))
+
         # Save results
         self.save_results()
-        
-        print(f"{Fore.GREEN}[+] Subdomain enumeration complete. Found {len(self.subdomains)} subdomains.{Style.RESET_ALL}")
-        
-        return sorted(list(self.subdomains))
+        print(f"{Fore.GREEN}[+] Subdomain enumeration complete. "
+              f"Found {len(self.subdomains)} valid subdomains.{Style.RESET_ALL}")
+        return list(self.subdomains)
     
     def _run_external_tools(self):
         """Run external tools in parallel"""

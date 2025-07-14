@@ -274,6 +274,9 @@ class WebScreenshotter:
         # Remove duplicates
         targets = list(set(targets))
         
+        # Skip wildcards / non-FQDNs
+        targets = [t for t in targets if '*' not in t and '.' in t]
+        
         if use_threading:
             return self.take_screenshots_threaded(targets)
         else:
