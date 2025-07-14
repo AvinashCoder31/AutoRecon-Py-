@@ -90,13 +90,14 @@ class AutoRecon:
 """
         print(ascii_art)
 
-        title = "AutoRecon-Py v1.1 - Automated Reconnaissance Tool \n # Coded by Avinash .R - @AvinashCoder31"
+        title_lines = [
+            "AutoRecon-Py v1.1 - Automated Reconnaissance Tool",
+            "# Coded by Avinash .R - @AvinashCoder31"
+        ]
         box_width = 80
-        
-        # Center the title
-        title_padding = (box_width - len(title)) // 2
-        centered_title = f"{' ' * title_padding}{title}"
-        print(f"{Fore.YELLOW}{centered_title}{Style.RESET_ALL}")
+        inner = box_width - 2
+        for line in title_lines:
+            print(f"{Fore.RED}║ {line.center(inner)} ║{Style.RESET_ALL}")
 
         # Prepare content with truncation and padding
         inner_width = box_width - 4  # `║  ...  ║`
@@ -117,12 +118,12 @@ class AutoRecon:
         line4 = f"{'Output:':<{label_width}}{output_str:<{value_width}}"
 
         # Print the box
-        print(f"{Fore.CYAN}╔{'═' * (box_width - 2)}╗{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}╔{'═' * (box_width)}╗{Style.RESET_ALL}")
         print(f"{Fore.CYAN}║  {Fore.GREEN}{line1}{Fore.CYAN}  ║")
         print(f"{Fore.CYAN}║  {Fore.GREEN}{line2}{Fore.CYAN}  ║")
         print(f"{Fore.CYAN}║  {Fore.GREEN}{line3}{Fore.CYAN}  ║")
         print(f"{Fore.CYAN}║  {Fore.GREEN}{line4}{Fore.CYAN}  ║")
-        print(f"{Fore.CYAN}╚{'═' * (box_width - 2)}╝{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}╚{'═' * (box_width)}╝{Style.RESET_ALL}")
     
     def run_subdomain_enumeration(self):
         """
