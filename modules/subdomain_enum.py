@@ -5,6 +5,7 @@ Performs subdomain discovery using multiple techniques
 """
 
 import os
+import json
 import requests
 import subprocess
 import threading
