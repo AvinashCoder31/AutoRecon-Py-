@@ -87,8 +87,8 @@ class AutoRecon:
 """
         print(ascii_art)
 
-        title = "AutoRecon-Py v1.1 - Automated Reconnaissance Tool"
-        box_width = 78
+        title = "AutoRecon-Py v1.1 - Automated Reconnaissance Tool \n # Coded by Avinash .R - @AvinashCoder31"
+        box_width = 80
         
         # Center the title
         title_padding = (box_width - len(title)) // 2
