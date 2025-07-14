@@ -9,8 +9,11 @@ import os
 import sys
 import time
 import json
+import requests, urllib3
 from datetime import datetime
 from colorama import Fore, Style, init
+
+urllib3.disable_warnings()
 
 # Initialize colorama for cross-platform colored output
 init(autoreset=True)
