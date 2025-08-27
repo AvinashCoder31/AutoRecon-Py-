@@ -24,7 +24,7 @@ A **beginner-friendly Python-based automated reconnaissance tool** for penetrati
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/AvinashCoder31/AutoRecon-Py.git
+git clone https://github.com/H4ckOpsAI/AutoRecon-Py.git
 cd AutoRecon-Py
 ```
 
